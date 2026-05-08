@@ -1,40 +1,71 @@
 import { useState, useCallback, useRef } from 'react'
 import { searchCertificates } from '../lib/certificates'
+import CertificatePanel from '../components/CertificatePanel'
 import styles from './Search.module.css'
 
-const COLUMNS = [
-  { key: 'cert_serial_no', label: 'Serial No.' },
-  { key: 'name',           label: 'Name' },
-  { key: 'gender',         label: 'Gender' },
-  { key: 'dob',            label: 'Date of Birth' },
-  { key: 'organisation',   label: 'Organisation' },
-  { key: 'group',          label: 'Group' },
-  { key: 'course_date',    label: 'Course Date' },
-  { key: 'level_of_award', label: 'Level of Award' },
-  { key: 'assessor',       label: 'Assessor' },
-  { key: 'instructor_cert',label: 'Instructor Cert' },
-  { key: 'receipt_no',     label: 'Receipt No.' },
-  { key: 'sheet',          label: 'Sheet' },
+const LEVELS = ['CP1', 'One Star', 'Two Star', 'Three Star']
+
+const VOIDED_OPTIONS = [
+  { value: 'valid',  label: 'Valid' },
+  { value: 'voided', label: 'Voided' },
+  { value: 'all',    label: 'All' },
 ]
+
+const COLUMNS = [
+  { key: 'cert_serial_no',  label: 'Serial No.' },
+  { key: 'name',            label: 'Name' },
+  { key: 'gender',          label: 'Gender' },
+  { key: 'dob',             label: 'Date of Birth' },
+  { key: 'organisation',    label: 'Organisation' },
+  { key: 'group',           label: 'Group' },
+  { key: 'course_date',     label: 'Course Date' },
+  { key: 'level_of_award',  label: 'Level of Award' },
+  { key: 'assessor',        label: 'Assessor' },
+  { key: 'instructor_cert', label: 'Instructor Cert' },
+  { key: 'receipt_no',      label: 'Receipt No.' },
+  { key: 'sheet',           label: 'Sheet' },
+]
+
+// Columns where highlighting applies (text search targets)
+const HIGHLIGHT_KEYS = new Set(['name', 'cert_serial_no'])
 
 function formatDate(val) {
   if (!val) return '—'
   return new Date(val).toLocaleDateString()
 }
 
-export default function Search() {
-  const [query, setQuery]     = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState(null)
-  const [searched, setSearched] = useState(false)
-  const debounceRef = useRef(null)
+function Highlight({ text, query }) {
+  if (!query || !text) return <>{text ?? '—'}</>
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = String(text).split(new RegExp(`(${escaped})`, 'gi'))
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} className={styles.highlight}>{part}</mark>
+          : part
+      )}
+    </>
+  )
+}
 
-  const runSearch = useCallback(async (q) => {
+export default function Search() {
+  const [query, setQuery]           = useState('')
+  const [results, setResults]       = useState([])
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState(null)
+  const [searched, setSearched]     = useState(false)
+  const [levelFilter, setLevelFilter] = useState(null)       // null = All
+  const [voidedFilter, setVoidedFilter] = useState('valid')
+  const [selectedCert, setSelectedCert] = useState(null)
+  const debounceRef = useRef(null)
+  const activeQueryRef = useRef('')
+
+  const runSearch = useCallback(async (q, opts) => {
     setLoading(true)
     setError(null)
     try {
-      const data = await searchCertificates(q)
+      const data = await searchCertificates(q, opts)
       setResults(data)
     } catch (err) {
       setError(err.message)
@@ -44,23 +75,44 @@ export default function Search() {
     }
   }, [])
 
-  function handleChange(e) {
-    const q = e.target.value
-    setQuery(q)
+  function scheduleSearch(q, level, voided) {
     clearTimeout(debounceRef.current)
+    activeQueryRef.current = q
     if (!q.trim()) {
       setResults([])
       setSearched(false)
       return
     }
-    debounceRef.current = setTimeout(() => runSearch(q.trim()), 350)
+    debounceRef.current = setTimeout(
+      () => runSearch(q.trim(), { levelOfAward: level, voidedFilter: voided }),
+      350
+    )
+  }
+
+  function handleChange(e) {
+    const q = e.target.value
+    setQuery(q)
+    scheduleSearch(q, levelFilter, voidedFilter)
   }
 
   function handleSubmit(e) {
     e.preventDefault()
     clearTimeout(debounceRef.current)
-    if (query.trim()) runSearch(query.trim())
+    if (query.trim()) runSearch(query.trim(), { levelOfAward: levelFilter, voidedFilter })
   }
+
+  function handleLevelChange(level) {
+    const next = levelFilter === level ? null : level
+    setLevelFilter(next)
+    scheduleSearch(query, next, voidedFilter)
+  }
+
+  function handleVoidedChange(val) {
+    setVoidedFilter(val)
+    scheduleSearch(query, levelFilter, val)
+  }
+
+  const displayedQuery = query.trim()
 
   return (
     <div className={styles.page}>
@@ -79,6 +131,40 @@ export default function Search() {
           {loading ? 'Searching…' : 'Search'}
         </button>
       </form>
+
+      <div className={styles.filters}>
+        <div className={styles.filterGroup}>
+          <span className={styles.filterLabel}>Level</span>
+          <button
+            className={`${styles.chip} ${levelFilter === null ? styles.chipActive : ''}`}
+            onClick={() => { setLevelFilter(null); scheduleSearch(query, null, voidedFilter) }}
+          >
+            All
+          </button>
+          {LEVELS.map(level => (
+            <button
+              key={level}
+              className={`${styles.chip} ${levelFilter === level ? styles.chipActive : ''}`}
+              onClick={() => handleLevelChange(level)}
+            >
+              {level}
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.filterGroup}>
+          <span className={styles.filterLabel}>Status</span>
+          {VOIDED_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              className={`${styles.chip} ${voidedFilter === opt.value ? styles.chipActive : ''}`}
+              onClick={() => handleVoidedChange(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {error && <p className={styles.error}>{error}</p>}
 
@@ -100,19 +186,38 @@ export default function Search() {
             </thead>
             <tbody>
               {results.map(cert => (
-                <tr key={cert.id} className={cert.voided ? styles.voided : ''}>
-                  {COLUMNS.map(c => (
-                    <td key={c.key}>
-                      {c.key === 'dob' || c.key === 'course_date'
-                        ? formatDate(cert[c.key])
-                        : cert[c.key] ?? '—'}
-                    </td>
-                  ))}
+                <tr
+                  key={cert.id}
+                  className={[
+                    cert.voided ? styles.voided : '',
+                    selectedCert?.id === cert.id ? styles.rowSelected : '',
+                    styles.rowClickable,
+                  ].join(' ')}
+                  onClick={() => setSelectedCert(cert)}
+                >
+                  {COLUMNS.map(c => {
+                    const isDate = c.key === 'dob' || c.key === 'course_date'
+                    const raw = isDate ? formatDate(cert[c.key]) : (cert[c.key] ?? '—')
+                    return (
+                      <td key={c.key}>
+                        {HIGHLIGHT_KEYS.has(c.key) && !isDate
+                          ? <Highlight text={cert[c.key]} query={displayedQuery} />
+                          : raw}
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedCert && (
+        <CertificatePanel
+          cert={selectedCert}
+          onClose={() => setSelectedCert(null)}
+        />
       )}
     </div>
   )

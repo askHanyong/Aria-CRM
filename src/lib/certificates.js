@@ -45,21 +45,23 @@ export async function voidCertificate(id) {
 }
 
 // Searches name via full-text (GIN index) and cert_serial_no via prefix match.
-// Returns up to `limit` non-voided results.
-export async function searchCertificates(query, limit = 50) {
+// options.levelOfAward — filter to a specific award level (null = all)
+// options.voidedFilter — 'valid' | 'voided' | 'all'
+export async function searchCertificates(query, options = {}, limit = 50) {
+  const { levelOfAward = null, voidedFilter = 'valid' } = options
   const trimmed = query.trim()
   if (!trimmed) return []
 
-  // cert_serial_no: ilike prefix match
-  // name: postgres full-text via the generated name_fts column
-  const { data, error } = await supabase
+  let q = supabase
     .from('certificates')
-    .select('id, name, gender, dob, organisation, group, cert_serial_no, course_date, level_of_award, assessor, instructor_cert, receipt_no, sheet, voided')
+    .select('id, name, gender, dob, organisation, "group", cert_serial_no, course_date, level_of_award, assessor, instructor_cert, receipt_no, sheet, voided')
     .or(`name_fts.fts.${trimmed.split(/\s+/).join(' & ')},cert_serial_no.ilike.${trimmed}%`)
-    .eq('voided', false)
-    .order('name')
-    .limit(limit)
 
+  if (voidedFilter === 'valid')  q = q.eq('voided', false)
+  if (voidedFilter === 'voided') q = q.eq('voided', true)
+  if (levelOfAward)              q = q.eq('level_of_award', levelOfAward)
+
+  const { data, error } = await q.order('name').limit(limit)
   if (error) throw error
   return data
 }
