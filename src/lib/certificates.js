@@ -48,6 +48,37 @@ export async function unvoidCertificate(id) {
   return updateCertificate(id, { voided: false })
 }
 
+// Inserts records in batches of 100. On a batch error, retries row-by-row
+// so individual failures are identified. Calls onProgress(done, total) each batch.
+export async function bulkInsertCertificates(records, onProgress) {
+  const BATCH = 100
+  let inserted = 0
+  const errors = []
+
+  for (let i = 0; i < records.length; i += BATCH) {
+    const batch = records.slice(i, i + BATCH)
+    const { error } = await supabase.from('certificates').insert(batch)
+
+    if (!error) {
+      inserted += batch.length
+    } else {
+      // Retry row-by-row to pinpoint which rows actually fail
+      for (let j = 0; j < batch.length; j++) {
+        const { error: rowErr } = await supabase.from('certificates').insert(batch[j])
+        if (rowErr) {
+          errors.push({ index: i + j + 1, record: batch[j], message: rowErr.message })
+        } else {
+          inserted++
+        }
+      }
+    }
+
+    onProgress?.(Math.min(i + BATCH, records.length), records.length)
+  }
+
+  return { inserted, errors }
+}
+
 // Searches name via full-text (GIN index) and cert_serial_no via prefix match.
 // options.levelOfAward — filter to a specific award level (null = all)
 // options.voidedFilter — 'valid' | 'voided' | 'all'

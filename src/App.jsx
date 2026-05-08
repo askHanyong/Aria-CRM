@@ -4,11 +4,13 @@ import Auth from './components/Auth'
 import Dashboard from './pages/Dashboard'
 import Search from './pages/Search'
 import Admin from './pages/Admin'
+import Import from './pages/Import'
 import { supabase } from './lib/supabase'
 
 const NAV = [
   { key: 'search',    label: 'Search' },
   { key: 'admin',     label: 'Admin' },
+  { key: 'import',    label: 'Import' },
   { key: 'dashboard', label: 'Dashboard' },
 ]
 
@@ -43,6 +45,7 @@ function App() {
       </nav>
       {page === 'search'    && <Search />}
       {page === 'admin'     && <Admin />}
+      {page === 'import'    && <Import />}
       {page === 'dashboard' && <Dashboard user={user} />}
     </>
   )
