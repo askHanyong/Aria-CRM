@@ -44,6 +44,10 @@ export async function voidCertificate(id) {
   return updateCertificate(id, { voided: true })
 }
 
+export async function unvoidCertificate(id) {
+  return updateCertificate(id, { voided: false })
+}
+
 // Searches name via full-text (GIN index) and cert_serial_no via prefix match.
 // options.levelOfAward — filter to a specific award level (null = all)
 // options.voidedFilter — 'valid' | 'voided' | 'all'

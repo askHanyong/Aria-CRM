@@ -154,6 +154,42 @@
   text-decoration: line-through;
 }
 
+/* ── Void / Unvoid buttons ── */
+.voidBtn,
+.unvoidBtn {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.voidBtn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.voidBtn:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.unvoidBtn {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.unvoidBtn:hover:not(:disabled) {
+  background: #bbf7d0;
+}
+
+.voidBtn:disabled,
+.unvoidBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Search highlight ── */
 .highlight {
   background: #fef08a;

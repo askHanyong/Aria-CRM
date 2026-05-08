@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { searchCertificates } from '../lib/certificates'
+import { searchCertificates, voidCertificate, unvoidCertificate } from '../lib/certificates'
 import CertificatePanel from '../components/CertificatePanel'
 import styles from './Search.module.css'
 
@@ -26,7 +26,6 @@ const COLUMNS = [
   { key: 'sheet',           label: 'Sheet' },
 ]
 
-// Columns where highlighting applies (text search targets)
 const HIGHLIGHT_KEYS = new Set(['name', 'cert_serial_no'])
 
 function formatDate(val) {
@@ -50,16 +49,16 @@ function Highlight({ text, query }) {
 }
 
 export default function Search() {
-  const [query, setQuery]           = useState('')
-  const [results, setResults]       = useState([])
-  const [loading, setLoading]       = useState(false)
-  const [error, setError]           = useState(null)
-  const [searched, setSearched]     = useState(false)
-  const [levelFilter, setLevelFilter] = useState(null)       // null = All
+  const [query, setQuery]               = useState('')
+  const [results, setResults]           = useState([])
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState(null)
+  const [searched, setSearched]         = useState(false)
+  const [levelFilter, setLevelFilter]   = useState(null)
   const [voidedFilter, setVoidedFilter] = useState('valid')
   const [selectedCert, setSelectedCert] = useState(null)
+  const [voidingId, setVoidingId]       = useState(null)
   const debounceRef = useRef(null)
-  const activeQueryRef = useRef('')
 
   const runSearch = useCallback(async (q, opts) => {
     setLoading(true)
@@ -77,12 +76,7 @@ export default function Search() {
 
   function scheduleSearch(q, level, voided) {
     clearTimeout(debounceRef.current)
-    activeQueryRef.current = q
-    if (!q.trim()) {
-      setResults([])
-      setSearched(false)
-      return
-    }
+    if (!q.trim()) { setResults([]); setSearched(false); return }
     debounceRef.current = setTimeout(
       () => runSearch(q.trim(), { levelOfAward: level, voidedFilter: voided }),
       350
@@ -110,6 +104,28 @@ export default function Search() {
   function handleVoidedChange(val) {
     setVoidedFilter(val)
     scheduleSearch(query, levelFilter, val)
+  }
+
+  // Called by CertificatePanel after a successful edit save
+  function handleUpdate(updated) {
+    setResults(prev => prev.map(c => c.id === updated.id ? updated : c))
+    setSelectedCert(updated)
+  }
+
+  async function handleVoidToggle(cert, e) {
+    e.stopPropagation()
+    setVoidingId(cert.id)
+    try {
+      const updated = cert.voided
+        ? await unvoidCertificate(cert.id)
+        : await voidCertificate(cert.id)
+      setResults(prev => prev.map(c => c.id === updated.id ? updated : c))
+      if (selectedCert?.id === updated.id) setSelectedCert(updated)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setVoidingId(null)
+    }
   }
 
   const displayedQuery = query.trim()
@@ -182,6 +198,7 @@ export default function Search() {
             <thead>
               <tr>
                 {COLUMNS.map(c => <th key={c.key}>{c.label}</th>)}
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -206,6 +223,15 @@ export default function Search() {
                       </td>
                     )
                   })}
+                  <td>
+                    <button
+                      className={cert.voided ? styles.unvoidBtn : styles.voidBtn}
+                      disabled={voidingId === cert.id}
+                      onClick={e => handleVoidToggle(cert, e)}
+                    >
+                      {voidingId === cert.id ? '…' : cert.voided ? 'Unvoid' : 'Void'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -217,6 +243,7 @@ export default function Search() {
         <CertificatePanel
           cert={selectedCert}
           onClose={() => setSelectedCert(null)}
+          onUpdate={handleUpdate}
         />
       )}
     </div>
