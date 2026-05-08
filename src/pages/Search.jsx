@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { searchCertificates, voidCertificate, unvoidCertificate } from '../lib/certificates'
 import CertificatePanel from '../components/CertificatePanel'
+import { downloadCsv } from '../lib/exportCsv'
 import styles from './Search.module.css'
 
 const LEVELS = ['CP1', 'One Star', 'Two Star', 'Three Star']
@@ -185,11 +186,32 @@ export default function Search() {
       {error && <p className={styles.error}>{error}</p>}
 
       {searched && !loading && (
-        <p className={styles.count}>
-          {results.length === 0
-            ? 'No certificates found.'
-            : `${results.length} result${results.length === 1 ? '' : 's'} found.`}
-        </p>
+        <div className={styles.resultsMeta}>
+          <p className={styles.count}>
+            {results.length === 0
+              ? 'No certificates found.'
+              : `${results.length} result${results.length === 1 ? '' : 's'} found.`}
+          </p>
+          {results.length > 0 && (
+            <button
+              className={styles.exportBtn}
+              onClick={() => {
+                const headers = [...COLUMNS.map(c => c.label), 'Voided']
+                const rows = results.map(cert => [
+                  ...COLUMNS.map(c =>
+                    c.key === 'dob' || c.key === 'course_date'
+                      ? (cert[c.key] ?? '')
+                      : (cert[c.key] ?? '')
+                  ),
+                  cert.voided ? 'Yes' : 'No',
+                ])
+                downloadCsv(`certificates-${Date.now()}.csv`, headers, rows)
+              }}
+            >
+              Export CSV
+            </button>
+          )}
+        </div>
       )}
 
       {results.length > 0 && (

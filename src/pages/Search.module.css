@@ -45,6 +45,30 @@
   cursor: not-allowed;
 }
 
+/* ── Results meta row ── */
+.resultsMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.exportBtn {
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: none;
+  border: 1px solid #6366f1;
+  color: #6366f1;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.exportBtn:hover {
+  background: #eef2ff;
+}
+
 /* ── Filters ── */
 .filters {
   display: flex;
