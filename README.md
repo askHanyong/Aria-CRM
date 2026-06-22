@@ -14,18 +14,19 @@ A React + Vite app for tracking student tuition payments, backed by Supabase for
 ```
 src/
   components/
-    auth/         AuthForm
-    layout/        Navbar, AppLayout
-    students/      StudentForm, StudentList
-    payments/      PaymentForm, PaymentList
+    auth/            AuthForm
+    layout/          Navbar, AppLayout
+    students/        StudentForm, StudentList
+    lessons/         LessonForm, LessonList
+    payment-cycles/  PaymentCycleForm, PaymentCycleList
     RequireAuth.jsx
-  hooks/           useAuth, useStudents, usePayments
-  lib/             supabase client, format helpers
-  pages/           Login, Dashboard, Students, Payments
+  hooks/             useAuth, useStudents, useLessons, usePaymentCycles
+  lib/               supabase client, tutor provisioning, format helpers
+  pages/             Login, Dashboard, Students, Lessons, PaymentCycles
   App.jsx
   main.jsx
 supabase/
-  migrations/      SQL migrations (tutors, students, lessons, payment_cycles + RLS)
+  migrations/        SQL migrations (tutors, students, lessons, payment_cycles + RLS)
 ```
 
 ## Setup

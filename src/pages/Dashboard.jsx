@@ -1,29 +1,35 @@
 import { useMemo } from 'react'
 import { useStudents } from '../hooks/useStudents'
-import { usePayments } from '../hooks/usePayments'
+import { useLessons } from '../hooks/useLessons'
+import { usePaymentCycles } from '../hooks/usePaymentCycles'
 import { formatCurrency } from '../lib/format'
 
 export default function Dashboard() {
   const { students } = useStudents()
-  const { payments } = usePayments()
+  const { lessons } = useLessons()
+  const { paymentCycles } = usePaymentCycles()
 
   const stats = useMemo(() => {
-    const totalDue = payments.reduce((sum, p) => sum + Number(p.amount), 0)
-    const totalPaid = payments.filter((p) => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount), 0)
-    const overdue = payments.filter((p) => p.status === 'overdue').length
+    const totalDue = paymentCycles.reduce((sum, p) => sum + Number(p.amount_due), 0)
+    const totalPaid = paymentCycles
+      .filter((p) => p.status === 'paid')
+      .reduce((sum, p) => sum + Number(p.amount_due), 0)
+    const overdue = paymentCycles.filter((p) => p.status === 'overdue').length
+    const upcomingLessons = lessons.filter((l) => l.status === 'scheduled').length
 
-    return { totalDue, totalPaid, overdue }
-  }, [payments])
+    return { totalDue, totalPaid, overdue, upcomingLessons }
+  }, [paymentCycles, lessons])
 
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard label="Students" value={students.length} />
+        <StatCard label="Upcoming lessons" value={stats.upcomingLessons} />
         <StatCard label="Total billed" value={formatCurrency(stats.totalDue)} />
         <StatCard label="Total collected" value={formatCurrency(stats.totalPaid)} />
-        <StatCard label="Overdue payments" value={stats.overdue} />
+        <StatCard label="Overdue cycles" value={stats.overdue} />
       </div>
     </div>
   )

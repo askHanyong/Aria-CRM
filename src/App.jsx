@@ -5,7 +5,8 @@ import AppLayout from './components/layout/AppLayout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Students from './pages/Students'
-import Payments from './pages/Payments'
+import Lessons from './pages/Lessons'
+import PaymentCycles from './pages/PaymentCycles'
 
 export default function App() {
   const { user, session } = useAuth()
@@ -24,7 +25,8 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="students" element={<Students />} />
-        <Route path="payments" element={<Payments />} />
+        <Route path="lessons" element={<Lessons />} />
+        <Route path="payment-cycles" element={<PaymentCycles />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

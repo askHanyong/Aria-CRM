@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function StudentForm({ onCreated }) {
+  const { user } = useAuth()
   const [name, setName] = useState('')
   const [guardianEmail, setGuardianEmail] = useState('')
   const [monthlyFee, setMonthlyFee] = useState('')
@@ -14,6 +16,7 @@ export default function StudentForm({ onCreated }) {
     setError(null)
 
     const { error } = await supabase.from('students').insert({
+      tutor_id: user.id,
       name,
       guardian_email: guardianEmail || null,
       monthly_fee: monthlyFee ? Number(monthlyFee) : null,

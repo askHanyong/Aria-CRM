@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../hooks/useAuth'
 
-export default function PaymentForm({ students, defaultStudentId, onCreated }) {
+export default function PaymentCycleForm({ students, defaultStudentId, onCreated }) {
+  const { user } = useAuth()
   const [studentId, setStudentId] = useState(defaultStudentId ?? '')
-  const [amount, setAmount] = useState('')
+  const [periodStart, setPeriodStart] = useState('')
+  const [periodEnd, setPeriodEnd] = useState('')
+  const [amountDue, setAmountDue] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [status, setStatus] = useState('pending')
   const [error, setError] = useState(null)
@@ -14,9 +18,12 @@ export default function PaymentForm({ students, defaultStudentId, onCreated }) {
     setSubmitting(true)
     setError(null)
 
-    const { error } = await supabase.from('payments').insert({
+    const { error } = await supabase.from('payment_cycles').insert({
+      tutor_id: user.id,
       student_id: studentId,
-      amount: Number(amount),
+      period_start: periodStart,
+      period_end: periodEnd,
+      amount_due: Number(amountDue),
       due_date: dueDate,
       status,
       paid_at: status === 'paid' ? new Date().toISOString() : null,
@@ -25,7 +32,9 @@ export default function PaymentForm({ students, defaultStudentId, onCreated }) {
     if (error) {
       setError(error.message)
     } else {
-      setAmount('')
+      setPeriodStart('')
+      setPeriodEnd('')
+      setAmountDue('')
       setDueDate('')
       setStatus('pending')
       onCreated?.()
@@ -55,14 +64,36 @@ export default function PaymentForm({ students, defaultStudentId, onCreated }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500">Amount</label>
+        <label className="text-xs font-medium text-gray-500">Period start</label>
+        <input
+          type="date"
+          required
+          value={periodStart}
+          onChange={(e) => setPeriodStart(e.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-500">Period end</label>
+        <input
+          type="date"
+          required
+          value={periodEnd}
+          onChange={(e) => setPeriodEnd(e.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-500">Amount due</label>
         <input
           type="number"
           required
           min="0"
           step="0.01"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          value={amountDue}
+          onChange={(e) => setAmountDue(e.target.value)}
           className="w-32 rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
       </div>
@@ -98,7 +129,7 @@ export default function PaymentForm({ students, defaultStudentId, onCreated }) {
         disabled={submitting}
         className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
       >
-        Add payment
+        Add payment cycle
       </button>
     </form>
   )

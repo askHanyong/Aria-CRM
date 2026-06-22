@@ -16,8 +16,11 @@ export default function Navbar({ user }) {
       <NavLink to="/students" className={linkClass}>
         Students
       </NavLink>
-      <NavLink to="/payments" className={linkClass}>
-        Payments
+      <NavLink to="/lessons" className={linkClass}>
+        Lessons
+      </NavLink>
+      <NavLink to="/payment-cycles" className={linkClass}>
+        Payment cycles
       </NavLink>
       <div className="ml-auto flex items-center gap-3">
         <span className="text-sm text-gray-500">{user?.email}</span>

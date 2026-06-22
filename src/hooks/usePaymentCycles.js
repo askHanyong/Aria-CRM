@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export function usePayments(studentId) {
-  const [payments, setPayments] = useState([])
+export function usePaymentCycles(studentId) {
+  const [paymentCycles, setPaymentCycles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
     let query = supabase
-      .from('payments')
+      .from('payment_cycles')
       .select('*, students(name)')
       .order('due_date', { ascending: false })
 
@@ -18,7 +18,7 @@ export function usePayments(studentId) {
     const { data, error } = await query
 
     if (error) setError(error.message)
-    else setPayments(data)
+    else setPaymentCycles(data)
     setLoading(false)
   }, [studentId])
 
@@ -27,5 +27,5 @@ export function usePayments(studentId) {
     refresh()
   }, [refresh])
 
-  return { payments, loading, error, refresh }
+  return { paymentCycles, loading, error, refresh }
 }
