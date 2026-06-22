@@ -25,7 +25,7 @@ src/
   App.jsx
   main.jsx
 supabase/
-  migrations/      SQL migrations (students, payments tables + RLS)
+  migrations/      SQL migrations (tutors, students, lessons, payment_cycles + RLS)
 ```
 
 ## Setup
@@ -43,5 +43,9 @@ supabase/
 
 ## Data model
 
-- **students**: name, guardian_email, monthly_fee
-- **payments**: student_id, amount, due_date, status (`pending` | `paid` | `overdue`), paid_at
+- **tutors**: `id` (= `auth.users.id`), name, email — one row per tutor account
+- **students**: tutor_id, name, guardian_email, monthly_fee
+- **lessons**: student_id, tutor_id, lesson_date, duration_minutes, rate, status (`scheduled` | `completed` | `cancelled`), notes
+- **payment_cycles**: student_id, tutor_id, period_start, period_end, amount_due, amount_paid, due_date, status (`pending` | `paid` | `overdue`), paid_at
+
+Row-level security on every table scopes reads/writes to `tutor_id = auth.uid()` (or `id = auth.uid()` for `tutors`), so each tutor only ever sees their own students, lessons, and payment cycles.
