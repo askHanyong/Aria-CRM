@@ -1,16 +1,47 @@
-# React + Vite
+# Tuition Payment Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + Vite app for tracking student tuition payments, backed by Supabase for auth and data storage, styled with Tailwind CSS.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + Vite
+- React Router for client-side routing
+- Supabase (Postgres + Auth)
+- Tailwind CSS v4
 
-## React Compiler
+## Folder structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+src/
+  components/
+    auth/         AuthForm
+    layout/        Navbar, AppLayout
+    students/      StudentForm, StudentList
+    payments/      PaymentForm, PaymentList
+    RequireAuth.jsx
+  hooks/           useAuth, useStudents, usePayments
+  lib/             supabase client, format helpers
+  pages/           Login, Dashboard, Students, Payments
+  App.jsx
+  main.jsx
+supabase/
+  migrations/      SQL migrations (students, payments tables + RLS)
+```
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Install dependencies:
+   ```
+   npm install
+   ```
+2. Copy `.env.example` to `.env.local` and fill in your Supabase project URL and anon key.
+3. Run the SQL in `supabase/migrations/` against your Supabase project (via the SQL editor or `supabase db push`).
+4. Start the dev server:
+   ```
+   npm run dev
+   ```
+
+## Data model
+
+- **students**: name, guardian_email, monthly_fee
+- **payments**: student_id, amount, due_date, status (`pending` | `paid` | `overdue`), paid_at

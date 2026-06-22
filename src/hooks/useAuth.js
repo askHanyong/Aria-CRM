@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export function useAuth() {
@@ -6,17 +6,17 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession)
     })
 
-    return () => subscription.unsubscribe()
+    return () => subscription.subscription.unsubscribe()
   }, [])
 
-  return { session, loading, user: session?.user ?? null }
+  return { session, user: session?.user ?? null, loading }
 }
