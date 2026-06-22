@@ -1,52 +1,16 @@
-# Tuition Payment Tracker
+# React + Vite
 
-A React + Vite app for tracking student tuition payments, backed by Supabase for auth and data storage, styled with Tailwind CSS.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Stack
+Currently, two official plugins are available:
 
-- React 19 + Vite
-- React Router for client-side routing
-- Supabase (Postgres + Auth)
-- Tailwind CSS v4
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Folder structure
+## React Compiler
 
-```
-src/
-  components/
-    auth/            AuthForm
-    layout/          Navbar, AppLayout
-    students/        StudentForm, StudentList
-    lessons/         LessonForm, LessonList
-    payment-cycles/  PaymentCycleForm, PaymentCycleList
-    RequireAuth.jsx
-  hooks/             useAuth, useStudents, useLessons, usePaymentCycles
-  lib/               supabase client, tutor provisioning, format helpers
-  pages/             Login, Dashboard, Students, Lessons, PaymentCycles
-  App.jsx
-  main.jsx
-supabase/
-  migrations/        SQL migrations (tutors, students, lessons, payment_cycles + RLS)
-```
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Setup
+## Expanding the ESLint configuration
 
-1. Install dependencies:
-   ```
-   npm install
-   ```
-2. Copy `.env.example` to `.env.local` and fill in your Supabase project URL and anon key.
-3. Run the SQL in `supabase/migrations/` against your Supabase project (via the SQL editor or `supabase db push`).
-4. Start the dev server:
-   ```
-   npm run dev
-   ```
-
-## Data model
-
-- **tutors**: `id` (= `auth.users.id`), name, email — one row per tutor account
-- **students**: tutor_id, name, guardian_email, monthly_fee
-- **lessons**: student_id, tutor_id, lesson_date, duration_minutes, rate, status (`scheduled` | `completed` | `cancelled`), notes
-- **payment_cycles**: student_id, tutor_id, period_start, period_end, amount_due, amount_paid, due_date, status (`pending` | `paid` | `overdue`), paid_at
-
-Row-level security on every table scopes reads/writes to `tutor_id = auth.uid()` (or `id = auth.uid()` for `tutors`), so each tutor only ever sees their own students, lessons, and payment cycles.
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
